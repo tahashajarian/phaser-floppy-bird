@@ -23,11 +23,12 @@ const config = {
   type: Phaser.AUTO,
   width: SHARED_CONFIG.width,
   height: SHARED_CONFIG.height,
+  pixelArt: true,
   physics: {
     default: 'arcade',
     arcade: {
       // gravity: { y: 400 },
-      debug: true
+      debug: false
     }
   },
   scene: initScenes()

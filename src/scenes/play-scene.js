@@ -19,14 +19,36 @@ class PlayScene extends BaseScene {
     this.handleCollisBirdAndPipe()
     this.createScore()
     this.listenToEvents()
+    this.createAnims()
   }
 
+  createAnims() {
+    this.anims.create({
+      key: 'fly',
+      frames: this.anims.generateFrameNumbers('bird', { start: 9, end: 15 }),
+      frameRate: 32,
+      repeat: 1
+    })
+
+    this.anims.create({
+      key: 'die',
+      frames: this.anims.generateFrameNumbers('bird', { start: 16, end: 18 }),
+      frameRate: 8,
+      // repeat: 0
+    })
+
+    this.bird.play('fly')
+
+  }
   createBG() {
     this.add.image(0, 0, 'sky').setOrigin(0);
   }
 
   createBird() {
     this.bird = this.physics.add.sprite(this.config.birdInitialPosition.x, this.config.birdInitialPosition.y, 'bird')
+      .setScale(3)
+      .setFlipX(true)
+    this.bird.setBodySize(this.bird.width, this.bird.height - 8)
     this.bird.setCollideWorldBounds(true);
     this.bird.body.gravity.y = 600
     this.bird.body.onWorldBounds = true
@@ -109,14 +131,18 @@ class PlayScene extends BaseScene {
   }
 
   gameOver() {
+    this.isPaused = true
     console.log('GAME OVER')
     this.physics.pause();
     this.bird.setTint(0xee4824)
+    this.bird.play('die')
+    this.bird.y -= 10
     this.saveBestScore()
     this.time.addEvent({
       delay: 1000,
       callback: () => {
         this.scene.restart();
+        this.isPaused = false
       },
       loop: false
     })
@@ -151,12 +177,15 @@ class PlayScene extends BaseScene {
 
   flap() {
     if (this.isPaused) return
-    // this if for limit jump speed :/
-    if (this.bird.body.velocity.y < -200) {
-      this.bird.body.velocity.y = -200
-    } else {
-      this.bird.body.velocity.y += this.birdJumpVelocity
-    }
+    // // this if for limit jump speed :/
+    // if (this.bird.body.velocity.y < -200) {
+    //   this.bird.body.velocity.y = -200
+    // } else {
+    //   this.bird.body.velocity.y += this.birdJumpVelocity
+    // }
+    this.bird.play('fly')
+    this.bird.body.velocity.y += this.birdJumpVelocity
+
   }
 
   restart() {
