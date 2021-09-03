@@ -6,8 +6,8 @@ import PreloadScene from "./scenes/preload-scene";
 import ScoreScene from "./scenes/score-scene";
 import PauseScene from "./scenes/pause-scene";
 
-const WIDTH = 800;
-const HEIGHT = 600;
+const WIDTH = window.innerWidth;
+const HEIGHT = window.innerHeight;
 const birdInitialPosition = { x: WIDTH * 0.1, y: HEIGHT / 2 }
 
 const SHARED_CONFIG = {

@@ -59,6 +59,8 @@ class PlayScene extends BaseScene {
     for (let i = 0; i < 3; i++) {
       const pipeTop = this.pipes.create(0, 0, 'pipe').setImmovable(true).setOrigin(0, 1)
       const pipeBottom = this.pipes.create(0, 0, 'pipe').setImmovable(true).setOrigin(0, 0)
+      pipeTop.setDisplaySize(pipeTop.width, this.config.height)
+      pipeBottom.setDisplaySize(pipeBottom.width, this.config.height)
       this.placePipe(pipeTop, pipeBottom)
     }
     this.pipes.setVelocity(-200, 0)
@@ -164,7 +166,6 @@ class PlayScene extends BaseScene {
     const arrayPipes = this.pipes.getChildren();
     const passedPipe = []
     arrayPipes.forEach(pipe => {
-      // console.log(pipe)
       if (pipe.getBounds().right < 0) {
         passedPipe.push(pipe)
         if (passedPipe.length === 2) {
@@ -189,7 +190,6 @@ class PlayScene extends BaseScene {
   }
 
   restart() {
-    console.log('game over')
     this.bird.body.velocity.y = 0
     this.bird.x = this.config.birdInitialPosition.x
     this.bird.y = this.config.birdInitialPosition.y

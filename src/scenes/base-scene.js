@@ -13,9 +13,19 @@ class BaseScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(0, 0, 'sky').setOrigin(0)
+    this.bg = this.add.image(0, 0, 'sky').setOrigin(0)
+    this.bg.setDisplaySize(this.config.width, this.config.height);
+    this.listenToResize()
   }
 
+  listenToResize() {
+    window.addEventListener('resize', () => {
+      // TODO: fix it later
+      this.config.width = window.innerWidth
+      this.config.height = window.innerHeight
+      window.location.reload()
+    })
+  }
 
   createMenus(menu) {
     let lastItmeMenuY = 0
