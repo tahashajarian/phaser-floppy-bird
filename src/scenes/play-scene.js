@@ -6,6 +6,7 @@ class PlayScene extends BaseScene {
     super(scenesName.PLAY_SCENE, config);
     this.birdJumpVelocity = -300;
     this.isPaused = false;
+    this.groundSize = 170;
   }
 
   create() {
@@ -42,7 +43,6 @@ class PlayScene extends BaseScene {
       this.placeGround(ground);
       ground.setBodySize(ground.width, ground.height - 40);
     }
-    this.groundSize = 170;
     this.grounds.setVelocity(-200, 0);
   }
 
