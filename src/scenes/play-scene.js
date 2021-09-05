@@ -70,9 +70,9 @@ class PlayScene extends BaseScene {
 
   createPause() {
     const pauseButton = this.add
-      .image(this.config.width - 10, this.config.height - 5, "pause")
+      .image(this.config.width - 15, 10, "pause")
       .setInteractive()
-      .setOrigin(1)
+      .setOrigin(1, 0)
       .setScale(3);
 
     pauseButton.on("pointerdown", () => {
@@ -180,6 +180,7 @@ class PlayScene extends BaseScene {
         this.pipes.setVelocity(-200, 0);
         this.grounds.setVelocity(-200, 0);
         this.isPaused = false;
+        this.getLocalStorage();
       },
       loop: false,
       // callbackScope: this,
@@ -264,12 +265,12 @@ class PlayScene extends BaseScene {
 
   placeMountain(mountain) {
     const mountainHorizontalDistance =
-      this.getRightLastMountain() + Phaser.Math.Between(700, 800);
+      this.getRightLastMountain() + Phaser.Math.Between(700, 1000);
     const mountainPositionRange = this.config.height - this.groundSize;
     mountain.setOrigin(1, 1);
     mountain.x = mountainHorizontalDistance;
     mountain.y = mountainPositionRange;
-    mountain.setScale(Math.random() * (1 - 0.9) + 0.9);
+    mountain.setScale(Math.random() * (1.4 - 0.8) + 0.8);
   }
 
   placeGround(ground) {
