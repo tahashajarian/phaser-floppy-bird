@@ -12,7 +12,6 @@ class PlayScene extends BaseScene {
   create() {
     super.create();
     this.createMountains();
-    this.createClouds();
     this.createPipes();
     this.createGround();
     this.createBird();
@@ -26,19 +25,11 @@ class PlayScene extends BaseScene {
     this.isPaused = false;
   }
 
-  createClouds() {
-    this.clouds = this.physics.add.group();
-    for (let i = 0; i < 9; i++) {
-      const cloud = this.clouds.create(0, 0, "cloud");
-      this.placeCloud(cloud);
-    }
-    this.clouds.setVelocity(-30, 0);
-  }
-
   createGround() {
     this.grounds = this.physics.add.group();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 2; i++) {
       const ground = this.grounds.create(0, 0, "ground").setImmovable(true);
+      // ground.setDisplaySize(ground.width, 170);
 
       this.placeGround(ground);
       ground.setBodySize(ground.width, ground.height - 40);
@@ -102,14 +93,14 @@ class PlayScene extends BaseScene {
   createScore() {
     this.score = 0;
     this.scoreText = this.add.text(16, 16, `Score: 0`, {
-      fontSize: "20px",
-      fill: "#222",
+      fontSize: "26px",
+      fill: "#fff",
     });
     this.BestScoreText = this.add.text(
       16,
-      40,
+      45,
       `Best Score: ${this.bestScore || 0}`,
-      { fontSize: "16px", fill: "#444" }
+      { fontSize: "18px", fill: "#fff" }
     );
   }
 
@@ -254,27 +245,17 @@ class PlayScene extends BaseScene {
     bPipe.y = uPipe.y + pipeVerticalDistance;
   }
 
-  placeCloud(cloud) {
-    const cloundHorizontalDistance =
-      this.getRightLastCloud() + Phaser.Math.Between(200, 250);
-    const cloundPositionRange = Phaser.Math.Between(20, 200);
-    cloud.x = cloundHorizontalDistance;
-    cloud.y = cloundPositionRange;
-    cloud.setScale(Math.random() * (0.7 - 0.3) + 0.3);
-  }
-
   placeMountain(mountain) {
-    const mountainHorizontalDistance =
-      this.getRightLastMountain() + Phaser.Math.Between(700, 1000);
+    const mountainHorizontalDistance = this.getRightLastMountain() + 1024;
     const mountainPositionRange = this.config.height - this.groundSize;
     mountain.setOrigin(1, 1);
     mountain.x = mountainHorizontalDistance;
     mountain.y = mountainPositionRange;
-    mountain.setScale(Math.random() * (1.4 - 0.8) + 0.8);
+    mountain.setScale(2);
   }
 
   placeGround(ground) {
-    const GroundHorizontalDistance = this.getRightLastGround() + 870;
+    const GroundHorizontalDistance = this.getRightLastGround() + 1500;
     const GroundPositionRange = this.config.height;
     ground.setOrigin(1, 1);
     ground.x = GroundHorizontalDistance;
@@ -288,15 +269,6 @@ class PlayScene extends BaseScene {
       rightLastPipe = pipe.x > rightLastPipe ? pipe.x : rightLastPipe;
     });
     return rightLastPipe;
-  }
-
-  getRightLastCloud() {
-    let rightLastCloud = 0;
-    const arrayClouds = this.clouds.getChildren();
-    arrayClouds.forEach((cloud) => {
-      rightLastCloud = cloud.x > rightLastCloud ? cloud.x : rightLastCloud;
-    });
-    return rightLastCloud;
   }
 
   getRightLastMountain() {
