@@ -5,12 +5,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-    <title>flappy bird</title>
+    <meta name="theme-color" content="#17172c" />
+    <meta name="description" content="A polished pixel-art Flappy Bird arcade game." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <title>Flappy Bird</title>
     <style>
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; }
       body {
-        padding: 0;
         margin: 0;
         overflow: hidden;
+        background: #17172c;
+        font-family: "Trebuchet MS", system-ui, sans-serif;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+        image-rendering: pixelated;
       }
     </style>
   </head>

@@ -1,5 +1,7 @@
 import BaseScene from "./base-scene";
 import { scenesName, BEST_SCORE } from "./constance";
+import { getDifficulty, getMedal } from "../gameplay-utils.mjs";
+import Phaser from "phaser/dist/phaser-arcade-physics";
 
 class PlayScene extends BaseScene {
   constructor(config) {
@@ -18,11 +20,17 @@ class PlayScene extends BaseScene {
     this.handleInputs();
     this.createPause();
     this.handleCollisWorld();
-    this.handleCollisBirdAndPipe();
+    this.handleCollisions();
     this.createScore();
     this.listenToEvents();
     this.createAnims();
+    this.deathSound = this.sound.add('death', { volume: .18 });
+    this.groundImpactSound = this.sound.add('death', { volume: .14, rate: .65 });
+    this.groundImpactPlayed = false;
     this.isPaused = false;
+    this.isReady = false;
+    this.physics.pause();
+    this.startCountdown();
   }
 
   createGround() {
@@ -53,60 +61,107 @@ class PlayScene extends BaseScene {
   }
 
   handleInputs() {
-    this.input.on("pointerdown", this.flap.bind(this));
-    this.input.keyboard.on("keydown_SPACE", () => this.flap());
-    this.input.keyboard.on("keydown_UP", () => this.flap());
-    this.input.keyboard.on("keydown_ESC", () => this.pauseGame());
+    this.input.on("pointerdown", (pointer) => {
+      if (pointer.y > 72) this.flap();
+    });
+    this.input.keyboard.on("keydown-SPACE", () => this.flap());
+    this.input.keyboard.on("keydown-UP", () => this.flap());
+    this.input.keyboard.on("keydown-ESC", () => this.pauseGame());
   }
 
   createPause() {
+    const pauseBg = this.add.circle(this.config.width - 32, 32, 21, 0x20203c, .82).setStrokeStyle(2, 0xffffff, .12);
     const pauseButton = this.add
-      .image(this.config.width - 15, 10, "pause")
+      .image(this.config.width - 32, 32, "pause")
       .setInteractive()
-      .setOrigin(1, 0)
-      .setScale(3);
+      .setScale(2.25);
 
     pauseButton.on("pointerdown", () => {
+      this.playTone('click');
       this.pauseGame();
     });
   }
 
   handleCollisWorld() {
     this.physics.world.on("worldbounds", (body, up, down, left, right) => {
-      if (down || up) {
-        this.gameOver();
-      }
+      if (up) this.endGame(true);
+      if (down) this.handleGroundHit();
     });
   }
 
-  handleCollisBirdAndPipe() {
-    this.physics.add.collider(this.bird, this.pipes, this.gameOver, null, this);
+  handleCollisions() {
+    this.physics.add.collider(this.bird, this.pipes, this.handlePipeHit, null, this);
     this.physics.add.collider(
       this.bird,
       this.grounds,
-      this.gameOver,
+      this.handleGroundHit,
       null,
       this
     );
   }
 
+  handlePipeHit() {
+    this.endGame(true);
+  }
+
+  handleGroundHit() {
+    if (!this.groundImpactPlayed) {
+      this.groundImpactPlayed = true;
+      this.soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+      if (this.soundEnabled && this.groundImpactSound) this.groundImpactSound.play();
+    }
+    this.endGame(false);
+  }
+
   createScore() {
     this.score = 0;
-    this.scoreText = this.add.text(16, 16, `Score: 0`, {
-      fontSize: "26px",
-      fill: "#fff",
-    });
+    this.scoreText = this.add.text(this.centerScreen[0], 32, `0`, {
+      fontFamily: 'Trebuchet MS', fontSize: "42px", fontStyle: 'bold', color: "#fff",
+      stroke: '#242442', strokeThickness: 7
+    }).setOrigin(.5, 0);
     this.BestScoreText = this.add.text(
-      16,
-      45,
-      `Best Score: ${this.bestScore || 0}`,
-      { fontSize: "18px", fill: "#fff" }
-    );
+      this.centerScreen[0], 78, `BEST  ${this.bestScore || 0}`,
+      { fontFamily: 'Trebuchet MS', fontSize: "12px", fontStyle: 'bold', color: "#ffd166" }
+    ).setOrigin(.5, 0);
+  }
+
+  startCountdown() {
+    let count = 3;
+    const countdownText = this.add.text(this.centerScreen[0], this.centerScreen[1] - 78, `${count}`, {
+      fontFamily: 'Trebuchet MS', fontSize: '58px', fontStyle: 'bold', color: '#ffffff',
+      stroke: '#242442', strokeThickness: 7
+    }).setOrigin(.5).setDepth(40);
+    const hint = this.add.text(this.centerScreen[0], this.centerScreen[1] - 18, 'GET READY', {
+      fontFamily: 'Trebuchet MS', fontSize: '12px', fontStyle: 'bold', color: '#ffd166', letterSpacing: 3
+    }).setOrigin(.5).setDepth(40);
+    this.playTone('countdown');
+    this.time.addEvent({
+      delay: 620, repeat: 3,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          countdownText.setText(`${count}`);
+          this.playTone('countdown');
+          this.tweens.add({ targets: countdownText, scale: 1.25, duration: 100, yoyo: true });
+        } else if (count === 0) {
+          countdownText.setText('GO!').setColor('#ffd166').setFontSize(42);
+          hint.setText('TAP • SPACE • ↑');
+          this.playTone('score');
+          this.physics.resume();
+          this.isReady = true;
+        } else {
+          countdownText.destroy();
+          hint.destroy();
+        }
+      }
+    });
   }
 
   listenToEvents() {
     if (this.eventListener) return;
     this.eventListener = this.events.on("resume", () => {
+      this.soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+      if (this.soundToggle) this.soundToggle.setText(this.soundEnabled ? 'SOUND  ON' : 'SOUND  OFF');
       this.resumeCountDownText = this.add
         .text(...this.centerScreen, "Continue in 3", this.fontStyle)
         .setOrigin(0.5);
@@ -120,14 +175,14 @@ class PlayScene extends BaseScene {
   }
 
   createAnims() {
-    this.anims.create({
+    if (!this.anims.exists('fly')) this.anims.create({
       key: "fly",
       frames: this.anims.generateFrameNumbers("bird", { start: 9, end: 15 }),
       frameRate: 32,
       repeat: 1,
     });
 
-    this.anims.create({
+    if (!this.anims.exists('die')) this.anims.create({
       key: "die",
       frames: this.anims.generateFrameNumbers("bird", { start: 16, end: 18 }),
       frameRate: 8,
@@ -154,31 +209,52 @@ class PlayScene extends BaseScene {
     }
   }
 
-  gameOver() {
+  endGame(playDeathCue = true) {
     if (this.isPaused) return;
-    // if (this.isPaused) return;
+    // Lock first so overlapping physics callbacks cannot stack death sounds.
     this.isPaused = true;
+    this.soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+    if (playDeathCue && this.soundEnabled && this.deathSound) {
+      if (this.deathSound.isPlaying) this.deathSound.stop();
+      this.deathSound.play();
+    }
     // this.physics.pause();
     this.pipes.setVelocity(0, 0);
     this.grounds.setVelocity(0, 0);
     this.bird.setTint(0xee4824);
     this.bird.play("die");
+    this.cameras.main.shake(160, .008);
     this.saveBestScore();
-    this.restrartTime = this.time.addEvent({
-      delay: 1000,
-      callback: () => {
-        this.scene.restart();
-        this.pipes.setVelocity(-200, 0);
-        this.grounds.setVelocity(-200, 0);
-        this.isPaused = false;
-        this.getLocalStorage();
-      },
-      loop: false,
-      // callbackScope: this,
-    });
+    this.time.delayedCall(350, () => this.showGameOver());
+  }
+
+  showGameOver() {
+    this.createPanel(this.centerScreen[0], this.centerScreen[1], 292, 250, .94);
+    this.add.text(this.centerScreen[0], this.centerScreen[1] - 86, 'FLIGHT OVER', {
+      fontFamily: 'Trebuchet MS', fontSize: '28px', fontStyle: 'bold', color: '#ff6b6b'
+    }).setOrigin(.5);
+    this.add.text(this.centerScreen[0] - 60, this.centerScreen[1] - 30, 'SCORE', {
+      fontFamily: 'Trebuchet MS', fontSize: '11px', fontStyle: 'bold', color: '#aaaac4'
+    }).setOrigin(.5);
+    this.add.text(this.centerScreen[0] - 60, this.centerScreen[1] - 2, `${this.score}`, this.fontStyle).setOrigin(.5);
+    this.add.text(this.centerScreen[0] + 60, this.centerScreen[1] - 30, 'BEST', {
+      fontFamily: 'Trebuchet MS', fontSize: '11px', fontStyle: 'bold', color: '#ffd166'
+    }).setOrigin(.5);
+    this.add.text(this.centerScreen[0] + 60, this.centerScreen[1] - 2, `${Math.max(this.score, Number(this.bestScore) || 0)}`, this.fontStyle).setOrigin(.5);
+    const medal = getMedal(this.score);
+    if (medal) {
+      this.add.circle(this.centerScreen[0], this.centerScreen[1] + 42, 14, medal.color)
+        .setStrokeStyle(3, 0xffffff, .35);
+      this.add.text(this.centerScreen[0] + 24, this.centerScreen[1] + 42, `${medal.name} FLIGHT`, {
+        fontFamily: 'Trebuchet MS', fontSize: '10px', fontStyle: 'bold', color: '#ffffff'
+      }).setOrigin(0, .5);
+    }
+    const retry = this.createButton(this.centerScreen[0], this.centerScreen[1] + 88, 'FLY AGAIN', 210);
+    retry.on('pointerup', () => { this.getLocalStorage(); this.scene.restart(); });
   }
 
   pauseGame() {
+    if (!this.isReady || this.isPaused) return;
     this.isPaused = true;
     this.physics.pause();
     this.scene.pause();
@@ -186,7 +262,20 @@ class PlayScene extends BaseScene {
   }
 
   update() {
+    this.checkBoundaryCollision();
     this.recyclePipe();
+    if (this.bird && this.bird.body && !this.isPaused && this.isReady) {
+      const targetAngle = Phaser.Math.Clamp(this.bird.body.velocity.y * .09, -18, 72);
+      this.bird.angle = Phaser.Math.Linear(this.bird.angle, targetAngle, .08);
+    }
+  }
+
+  checkBoundaryCollision() {
+    if (!this.bird || !this.bird.body || this.isPaused || !this.isReady) return;
+    const hitCeiling = this.bird.body.top <= 0;
+    const hitGround = this.bird.body.bottom >= this.config.height - this.groundSize + 12;
+    if (hitCeiling) this.endGame(true);
+    if (hitGround) this.handleGroundHit();
   }
 
   recyclePipe() {
@@ -222,19 +311,21 @@ class PlayScene extends BaseScene {
   }
 
   flap() {
-    if (this.isPaused) return;
+    if (this.isPaused || !this.isReady) return;
     this.bird.play("fly");
-    this.bird.body.velocity.y += this.birdJumpVelocity;
+    this.bird.body.setVelocityY(this.birdJumpVelocity);
+    this.tweens.add({ targets: this.bird, angle: -15, duration: 80 });
+    this.playTone('flap');
+    for (let i = 0; i < 4; i++) {
+      const puff = this.add.circle(this.bird.x - 18, this.bird.y + Phaser.Math.Between(-8, 8), Phaser.Math.Between(2, 4), 0xffffff, .55);
+      this.tweens.add({ targets: puff, x: puff.x - Phaser.Math.Between(16, 30), alpha: 0, scale: .2, duration: 320, onComplete: () => puff.destroy() });
+    }
   }
 
   placePipe(uPipe, bPipe) {
-    let pipeHorizontalDistance = this.getRightLastPipe() + 500;
-    let pipeVerticalDistance = 200;
-    // difculty Game
-    if (this.score > 1) {
-      pipeVerticalDistance -= this.score * 2;
-      pipeHorizontalDistance -= this.score * 5;
-    }
+    const difficulty = getDifficulty(this.score);
+    const pipeHorizontalDistance = this.getRightLastPipe() + difficulty.distance;
+    const pipeVerticalDistance = difficulty.gap;
     const pipePositionRange = Phaser.Math.Between(
       20,
       this.config.height - this.groundSize - 20 - pipeVerticalDistance
@@ -292,7 +383,11 @@ class PlayScene extends BaseScene {
 
   increasScore() {
     this.score++;
-    this.scoreText.setText(`Score: ${this.score}`);
+    this.scoreText.setText(`${this.score}`);
+    this.tweens.add({ targets: this.scoreText, scale: 1.24, duration: 90, yoyo: true });
+    const speed = getDifficulty(this.score).speed;
+    this.pipes.setVelocityX(-speed);
+    this.playTone('score');
     this.saveBestScore();
   }
 
@@ -312,6 +407,7 @@ class PlayScene extends BaseScene {
       const pipeTop = this.pipes
         .create(0, 0, "pipe")
         .setImmovable(true)
+        .setFlipY(true)
         .setOrigin(0, 1);
       const pipeBottom = this.pipes
         .create(0, 0, "pipe")
@@ -321,7 +417,7 @@ class PlayScene extends BaseScene {
       pipeBottom.setDisplaySize(pipeBottom.width, this.config.height);
       this.placePipe(pipeTop, pipeBottom);
     }
-    this.pipes.setVelocity(-200, 0);
+    this.pipes.setVelocity(-getDifficulty(this.score).speed, 0);
   }
 }
 

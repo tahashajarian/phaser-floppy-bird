@@ -5,14 +5,17 @@ class PauseScene extends BaseScene {
   constructor(config) {
     super(scenesName.PAUSE_SCENE, config)
     this.menus = [
-      { text: 'continue', scene: scenesName.PLAY_SCENE },
-      { text: 'Exit', scene: scenesName.MENU_SCENE },
+      { text: 'RESUME FLIGHT', scene: scenesName.PLAY_SCENE },
+      { text: 'BACK TO MENU', scene: scenesName.MENU_SCENE },
     ]
   }
 
   create() {
     super.create()
-    // this.scene.start('PlayScene')
+    this.createPanel(this.centerScreen[0], this.centerScreen[1], 292, 230, .9)
+    this.add.text(this.centerScreen[0], this.centerScreen[1] - 82, 'PAUSED', {
+      fontFamily: 'Trebuchet MS', fontSize: '25px', fontStyle: 'bold', color: '#ffd166'
+    }).setOrigin(.5)
     this.createMenus(this.menus)
   }
 
@@ -20,18 +23,8 @@ class PauseScene extends BaseScene {
 
   setUpMenuEvent(menuItem) {
     const textGO = menuItem.textGO;
-    textGO.setInteractive();
-
-    textGO.on('pointerover', () => {
-      textGO.setStyle({ fill: '#ff0' })
-    })
-
-    textGO.on('pointerout', () => {
-      textGO.setStyle({ fill: '#fff' })
-    })
-
     textGO.on('pointerup', () => {
-      if (menuItem.text === 'continue') {
+      if (menuItem.scene === scenesName.PLAY_SCENE) {
         this.scene.stop()
         this.scene.resume(menuItem.scene)
       } else {

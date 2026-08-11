@@ -1,0 +1,10 @@
+{
+  "name": "Flappy Bird",
+  "short_name": "Flappy Bird",
+  "description": "A polished pixel-art flying arcade game.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17172c",
+  "theme_color": "#17172c"
+}

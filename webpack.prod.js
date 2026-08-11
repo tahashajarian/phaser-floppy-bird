@@ -7,8 +7,8 @@ module.exports = merge(common, {
   mode: 'production',
   devtool: false,
   performance: {
-    maxEntrypointSize: 90000,
-    maxAssetSize: 900000
+    maxEntrypointSize: 1400000,
+    maxAssetSize: 1400000
   },
   optimization: {
     minimizer: [

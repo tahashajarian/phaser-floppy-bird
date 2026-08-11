@@ -36,9 +36,13 @@ module.exports = {
     ]
   },
   devServer: {
-    contentBase: path.resolve(__dirname, 'build'),
+    static: {
+      directory: path.resolve(__dirname, 'build'),
+    },
     compress: true,
     port: 8080,
+    hot: true,
+    open: false,
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -51,8 +55,16 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: path.resolve(__dirname, 'assets/**/*'),
-          to: path.resolve(__dirname, 'build')
+          from: path.resolve(__dirname, 'assets'),
+          to: 'assets'
+        },
+        {
+          from: path.resolve(__dirname, 'manifest.webmanifest'),
+          to: 'manifest.webmanifest'
+        },
+        {
+          from: path.resolve(__dirname, 'sw.js'),
+          to: 'sw.js'
         }
       ],
     })
